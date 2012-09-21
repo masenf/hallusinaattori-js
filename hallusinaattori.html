@@ -1,53 +1,150 @@
+<!DOCTYPE html>
 <html>
 <head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <title>Hallusinaattori Part Deux</title>
+<style>
+#customize {position: absolute;
+            top: 25%; left: 25%;
+            width: 50%; height: 50%;
+            background-color: #222;
+            color: #FFF;
+            padding: 5px; }
+#customize table {
+            border: 1px solid #FFF;
+            width: 100%}
+#customize table td {
+            text-align: center;}
+#picker { width: 70px; height: 70px; cursor: crosshair; float: left }
+#slide { width: 15px; height: 70px }
+</style>
+<link rel="stylesheet" href="themes.css">
 <script language="javascript" src="gee.min.js"></script>
+<script type="text/javascript" src="colorpicker.min.js"></script>
 <script language="javascript">
+speed = 2;
+width = 15;
+ring = 250;
+dir = 1;
+background = '#F00';
 window.onload = function() {
- 
+    var cpanel = document.getElementById('customize');
+    cpanel.style.visibility = 'hidden';
     var g = new GEE( { fullscreen: true } );
+    g,frameRate = 15;
 
-   
-    g.ctx.lineWidth = 15;
-    var arc_sep = 30;
     var start = 0;
-    var speed = 1.5;
-    var first_ring = 7 * arc_sep;
+    var showPanel = 0;
 
     g.draw = function() {
-        var midx = g.width / 2;
-        var midy = g.height / 2;
-        g.ctx.clearRect( 0, 0, g.width, g.height );
+        g.ctx.fillStyle = '#000';
         g.ctx.fillText( g.frameCount, 10, 10 );
-        for (var i=first_ring + start; i > 0; i-=arc_sep)
-        {
-            g.ctx.beginPath();
-            g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
-            g.ctx.closePath();
-            g.ctx.stroke();
+        g.ctx.clearRect( 0, 0, g.width, g.height );
+        g.ctx.fillStyle = background;
+        g.ctx.fillRect( 0, 0, g.width, g.height );
+        spiral(start, width, ring, dir, g);
+        start = start + speed;
+        if (showPanel) {
+            update_values();
         }
-        for (var i=midx + (5 * arc_sep) - start; i > first_ring; i-=arc_sep)
-        {
-            g.ctx.beginPath();
-            g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
-            g.ctx.closePath();
-            g.ctx.stroke();
-        }
-        start = (start + speed) % arc_sep;
     };
-   
-   g.mousedrag = function() {
-        
-      g.ctx.beginPath();
-      g.ctx.moveTo( g.pmouseX, g.pmouseY );
-      g.ctx.lineTo( g.mouseX, g.mouseY );
-      g.ctx.stroke();
-        
-   };
-
+    g.keydown = function() {
+        console.log(g.key + " " + g.keyCode);
+        if (g.keyCode == 67) {
+            if (showPanel) {
+                cpanel.style.visibility = 'hidden';
+                showPanel = 0;
+            } else {
+                cpanel.style.visibility = 'visible';
+                showPanel = 1;
+            }
+        }
+    }
 };
+function spiral(frame, width, ring, dir, g)
+{
+    var midx = g.width / 2;
+    var midy = g.height / 2;
+
+    var sep = width * 2;
+    var start = dir * (frame % sep);
+
+    g.ctx.lineWidth = width;
+    for (var i=ring + start - 15; i > 0; i-=sep)
+    {
+        g.ctx.beginPath();
+        g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
+        g.ctx.closePath();
+        g.ctx.stroke();
+    }
+    for (var i=midx + (5 * sep) - start; i > ring; i-=sep)
+    {
+        g.ctx.beginPath();
+        g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
+        g.ctx.closePath();
+        g.ctx.stroke();
+    }
+}
+function update_values()
+{
+    var speed_value = document.getElementById('speed_value');
+    var width_value = document.getElementById('width_value');
+    var ring_value = document.getElementById('ring_value');
+
+    speed_value.value = speed;
+    width_value.value = width;
+    ring_value.value = ring;
+}
 </script>
 </head>
 <body>
+    <div id="customize">
+    <table>
+        <tr>
+            <td>width</td>
+            <td>speed</td>
+            <td>ring</td>
+            <td>direction</td>
+            <td>background</td>
+        </tr>
+        <tr>
+            <td><input type="button" value="↑" id="width_up" onclick="width += 5"><br>
+                <input type="text" value="" id="width_value" size=5><br>
+                <input type="button" value="↓" id="width_dn" onclick="width -= 5"></td>
+            <td><input type="button" value="↑" id="speed_up" onclick="speed += 0.5"><br>
+                <input type="text" value="" id="speed_value" size=5><br>
+                <input type="button" value="↓" id="speed_dn" onclick="speed -= 0.5"></td>
+            <td><input type="button" value="↑" id="ring_up" onclick="ring += 10"><br>
+                <input type="text" value="" id="ring_value" size=5><br>
+                <input type="button" value="↓" id="ring_dn" onclick="ring -= 10"></td>
+            <td><input type="radio" name="dir" value="1"> Out<br>
+                <input type="radio" name="dir" value="-1"> In</td>
+            <td>
+                <div class="cp-small">
+                    <div class="picker-wrapper">
+                        <div class="picker" id='picker'></div>
+                        <div class="picker-indicator" id='picker-indicator'></div>
+                    </div>
+                    <div class="slide-wrapper">
+                        <div class="slide" id='slide'></div>
+                        <div class="slide-indicator" id='slide-indicator'></div>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                  var c = ColorPicker(
+                    document.getElementById('slide'),
+                    document.getElementById('picker'));
+                  c.callback = function(hex, hsv, rgb, mousePicker, mouseSlide) {                                                      
+                        ColorPicker.positionIndicators(
+                            document.getElementById('slide-indicator'),document.getElementById('picker-indicator'),
+                            mouseSlide, mousePicker
+                        );
+                        background = hex;
+                    };
+
+                </script></td>
+        </tr>
+    </table>
+    </div>
 </body>
 </html>
