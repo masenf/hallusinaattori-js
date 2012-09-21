@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>Hallusinaattori Part Deux</title>
+<script language="javascript" src="gee.min.js"></script>
+<script language="javascript">
+window.onload = function() {
+ 
+    var g = new GEE( { fullscreen: true } );
+
+   
+    g.ctx.lineWidth = 15;
+    var arc_sep = 30;
+    var start = 0;
+    var speed = 1.5;
+    var first_ring = 7 * arc_sep;
+
+    g.draw = function() {
+        var midx = g.width / 2;
+        var midy = g.height / 2;
+        g.ctx.clearRect( 0, 0, g.width, g.height );
+        g.ctx.fillText( g.frameCount, 10, 10 );
+        for (var i=first_ring + start; i > 0; i-=arc_sep)
+        {
+            g.ctx.beginPath();
+            g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
+            g.ctx.closePath();
+            g.ctx.stroke();
+        }
+        for (var i=midx + (5 * arc_sep) - start; i > first_ring; i-=arc_sep)
+        {
+            g.ctx.beginPath();
+            g.ctx.arc(midx,midy,i,0,2*Math.PI,0);
+            g.ctx.closePath();
+            g.ctx.stroke();
+        }
+        start = (start + speed) % arc_sep;
+    };
+   
+   g.mousedrag = function() {
+        
+      g.ctx.beginPath();
+      g.ctx.moveTo( g.pmouseX, g.pmouseY );
+      g.ctx.lineTo( g.mouseX, g.mouseY );
+      g.ctx.stroke();
+        
+   };
+
+};
+</script>
+</head>
+<body>
+</body>
+</html>
