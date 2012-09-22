@@ -6,7 +6,7 @@
 <style>
 #customize {position: absolute;
             top: 10%; left: 10%;
-            width: 40%; height: 20%;
+            width: 40%;
             background-color: #222;
             color: #FFF;
             padding: 5px; }
@@ -19,7 +19,7 @@
 #slide { width: 15px; height: 70px }
 #loading {position: absolute;
             top: 80%; left: 30%;
-            width: 40%; height: 12%;
+            width: 40%;
             background-color: #222;
             color: #FFF;
             padding: 5px; vertical-align: middle }
@@ -56,8 +56,6 @@ window.onload = function() {
         g.ctx.fillText( g.frameCount, 10, 10 );
         g.ctx.clearRect( 0, 0, g.width, g.height );
 
-        g.ctx.globalCompositeOperation = "destination-atop"
-
         if (refresh_fl) {
             if (stopping_pt == false) {
                 loading_msg.style.visibility = 'visible';
@@ -88,6 +86,8 @@ window.onload = function() {
             g.ctx.fillStyle = background;
         else
             g.ctx.fillStyle = get_spectrum(g.frameCount);
+
+        g.ctx.globalCompositeOperation = "destination-atop"
         g.ctx.fillRect( 0, 0, g.width, g.height );
 
 
@@ -178,6 +178,7 @@ function initialize_values() {
 }
 function spiral(frame, width, ring, dir, g)
 {
+    g.ctx.globalCompositeOperation = "source-over"
     var midx = g.width / 2;
     var midy = g.height / 2;
 
