@@ -5,8 +5,8 @@
 <title>Hallusinaattori Part Deux</title>
 <style>
 #customize {position: absolute;
-            top: 25%; left: 25%;
-            width: 50%; height: 50%;
+            top: 10%; left: 10%;
+            width: 40%; height: 20%;
             background-color: #222;
             color: #FFF;
             padding: 5px; }
@@ -23,10 +23,10 @@
 <script type="text/javascript" src="colorpicker.min.js"></script>
 <script language="javascript">
 speed = 2;
-width = 15;
+wwidth = 15;
 ring = 250;
 dir = 1;
-background = '#F00';
+background = '';
 window.onload = function() {
     var cpanel = document.getElementById('customize');
     cpanel.style.visibility = 'hidden';
@@ -40,9 +40,13 @@ window.onload = function() {
         g.ctx.fillStyle = '#000';
         g.ctx.fillText( g.frameCount, 10, 10 );
         g.ctx.clearRect( 0, 0, g.width, g.height );
-        g.ctx.fillStyle = background;
+
+        if (background)
+            g.ctx.fillStyle = background;
+        else
+            g.ctx.fillStyle = get_spectrum(g.frameCount);
         g.ctx.fillRect( 0, 0, g.width, g.height );
-        spiral(start, width, ring, dir, g);
+        spiral(start, wwidth, ring, dir, g);
         start = start + speed;
         if (showPanel) {
             update_values();
@@ -85,6 +89,42 @@ function spiral(frame, width, ring, dir, g)
         g.ctx.stroke();
     }
 }
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+function get_spectrum(frame) {
+    var val = frame % 1536;
+    var red = 255;
+    var green = 0;
+    var blue = 0;
+    if (val < 256) {
+        red = 255;
+        green = 0;
+        blue = val;
+    } else if (val >= 256 && val < 512) {
+        red = 255 - (val % 256);
+        green = 0;
+        blue = 255;
+    } else if (val >= 512 && val < 768) {
+        red = 0;
+        green = val % 256;
+        blue = 255;
+    } else if (val >= 768 && val < 1024) {
+        red = 0;
+        green = 255;
+        blue = 255 - (val % 256);
+    } else if (val >= 1024 && val < 1280) {
+        red = val % 256;
+        green = 255;
+        blue = 0;
+    } else if (val >= 1280 && val < 1536) {
+        red = 255;
+        green = 255 - (val % 256);
+        blue = 0;
+    }
+    return "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue);
+}
 function update_values()
 {
     var speed_value = document.getElementById('speed_value');
@@ -92,7 +132,7 @@ function update_values()
     var ring_value = document.getElementById('ring_value');
 
     speed_value.value = speed;
-    width_value.value = width;
+    width_value.value = wwidth;
     ring_value.value = ring;
 }
 </script>
@@ -108,17 +148,17 @@ function update_values()
             <td>background</td>
         </tr>
         <tr>
-            <td><input type="button" value="↑" id="width_up" onclick="width += 5"><br>
+            <td><input type="button" value="↑" id="width_up" onclick="wwidth += 5"><br>
                 <input type="text" value="" id="width_value" size=5><br>
-                <input type="button" value="↓" id="width_dn" onclick="width -= 5"></td>
+                <input type="button" value="↓" id="width_dn" onclick="wwidth -= 5"></td>
             <td><input type="button" value="↑" id="speed_up" onclick="speed += 0.5"><br>
                 <input type="text" value="" id="speed_value" size=5><br>
                 <input type="button" value="↓" id="speed_dn" onclick="speed -= 0.5"></td>
             <td><input type="button" value="↑" id="ring_up" onclick="ring += 10"><br>
                 <input type="text" value="" id="ring_value" size=5><br>
                 <input type="button" value="↓" id="ring_dn" onclick="ring -= 10"></td>
-            <td><input type="radio" name="dir" value="1"> Out<br>
-                <input type="radio" name="dir" value="-1"> In</td>
+            <td><input type="radio" name="dir" value="1" onclick="dir = 1"> Out<br>
+                <input type="radio" name="dir" value="-1" onclick="dir = -1"> In</td>
             <td>
                 <div class="cp-small">
                     <div class="picker-wrapper">
