@@ -17,6 +17,12 @@
             text-align: center;}
 #picker { width: 70px; height: 70px; cursor: crosshair; float: left }
 #slide { width: 15px; height: 70px }
+#loading {position: absolute;
+            top: 80%; left: 30%;
+            width: 40%; height: 12%;
+            background-color: #222;
+            color: #FFF;
+            padding: 5px; vertical-align: middle }
 </style>
 <link rel="stylesheet" href="themes.css">
 <script language="javascript" src="gee.min.js"></script>
@@ -27,31 +33,95 @@ wwidth = 15;
 ring = 250;
 dir = 1;
 background = '';
+refresh_fl = 1;
+stopping_pt = false;
 window.onload = function() {
     var cpanel = document.getElementById('customize');
+    var loading_msg = document.getElementById('loading');
+
     cpanel.style.visibility = 'hidden';
-    var g = new GEE( { fullscreen: true } );
-    g,frameRate = 15;
+    loading_msg.style.visibility = 'hidden';
+    g = new GEE( { fullscreen: true } );
+    //g.frameRate = 15;
 
     var start = 0;
     var showPanel = 0;
-
+    var spiralf;
+    var cache_width = g.width;
+    var cache_height = g.height;
+    var remaining = 0;
+    initialize_values();
     g.draw = function() {
         g.ctx.fillStyle = '#000';
         g.ctx.fillText( g.frameCount, 10, 10 );
         g.ctx.clearRect( 0, 0, g.width, g.height );
+
+        g.ctx.globalCompositeOperation = "destination-atop"
+
+        if (refresh_fl) {
+            if (stopping_pt == false) {
+                loading_msg.style.visibility = 'visible';
+                spiralf = Array();
+                stopping_pt = (start + (2*wwidth)) % (2*wwidth);
+                remaining = 2*wwidth;
+            } else if (start == stopping_pt) {
+                loading_msg.style.visibility = 'hidden';
+                refresh_fl = 0;
+                stopping_pt = false;
+            }
+            var p = document.getElementById('loading_progress');
+            p.innerHTML = remaining + " frames remaining";
+            remaining--;
+            g.ctx.clearRect(0,0,g.width,g.height);
+            g.ctx.fillStyle = "rgba(255,255,255,0)";
+            g.ctx.fillRect(0,0,g.width,g.height);
+            g.ctx.strokeStyle = "rgba(0,0,0,255)";
+            spiral(start, wwidth, ring, dir, g);
+            spiralf[start] = g.ctx.getImageData(0,0,g.width,g.height);
+            start = (start + 1) % (wwidth*2)
+        } else {
+            g.ctx.putImageData(spiralf[start],0,0);
+            start = Math.round(start + speed) % spiralf.length;
+        }
 
         if (background)
             g.ctx.fillStyle = background;
         else
             g.ctx.fillStyle = get_spectrum(g.frameCount);
         g.ctx.fillRect( 0, 0, g.width, g.height );
-        spiral(start, wwidth, ring, dir, g);
-        start = start + speed;
-        if (showPanel) {
-            update_values();
+
+
+        if (showPanel && g.frameCount % 90 == 0) {
+            var width_value = document.getElementById('width_value');
+            var ring_value = document.getElementById('ring_value');
+            var speed_value = document.getElementById('speed_value');
+            if (width_value.value != wwidth) {
+                wwidth = parseInt(width_value.value);
+                refresh();
+            }
+            if (ring_value.value != ring) {
+                ring = parseInt(ring_value.value);
+                refresh();
+            }
+            if (speed_value.value != speed) {
+                speed = parseFloat(speed_value.value);
+            }
+        }
+        if (g.width != cache_width || g.height != cache_height){
+            refresh();
+            cache_width = g.width;
+            cache_height = g.height;
         }
     };
+    g.mousedown = function() {
+        if (showPanel) {
+            cpanel.style.visibility = 'hidden';
+            showPanel = 0;
+        } else {
+            cpanel.style.visibility = 'visible';
+            showPanel = 1;
+        }
+    }
     g.keydown = function() {
         console.log(g.key + " " + g.keyCode);
         if (g.keyCode == 67) {
@@ -65,6 +135,47 @@ window.onload = function() {
         }
     }
 };
+function refresh() {
+    refresh_fl = 1;
+    stopping_pt = false;
+}
+function setwidth(delta_width) {
+    wwidth = parseInt(wwidth) + parseInt(delta_width);
+    refresh();
+    var width_value = document.getElementById('width_value');
+    width_value.value = wwidth;
+}
+function setring(delta_ring) {
+    ring = parseInt(ring) + parseInt(delta_ring);
+    refresh();
+    var ring_value = document.getElementById('ring_value');
+    ring_value.value = ring;
+}
+function setdir() {
+    var dir_radio = document.getElementsByName('dir');
+    for (var i = 0; i<dir_radio.length; i++) {
+        if (dir_radio[i].checked) {
+            dir = dir_radio[i].value;
+        }
+    }
+    refresh();
+}
+function setspeed(delta_speed) {
+    speed = parseFloat(speed) + parseFloat(delta_speed);
+    var speed_value = document.getElementById('speed_value');
+    speed_value.value = speed;
+}
+function initialize_values() {
+    var width_value = document.getElementById('width_value');
+    width_value.value = wwidth;
+    var speed_value = document.getElementById('speed_value');
+    speed_value.value = speed;
+    var ring_value = document.getElementById('ring_value');
+    ring_value.value = ring;
+    var dir_radio = document.getElementsByName('dir');
+    dir_radio[0].checked = true;
+
+}
 function spiral(frame, width, ring, dir, g)
 {
     var midx = g.width / 2;
@@ -125,16 +236,6 @@ function get_spectrum(frame) {
     }
     return "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue);
 }
-function update_values()
-{
-    var speed_value = document.getElementById('speed_value');
-    var width_value = document.getElementById('width_value');
-    var ring_value = document.getElementById('ring_value');
-
-    speed_value.value = speed;
-    width_value.value = wwidth;
-    ring_value.value = ring;
-}
 </script>
 </head>
 <body>
@@ -148,17 +249,17 @@ function update_values()
             <td>background</td>
         </tr>
         <tr>
-            <td><input type="button" value="↑" id="width_up" onclick="wwidth += 5"><br>
+            <td><input type="button" value="↑" id="width_up" onclick="setwidth(5)"><br>
                 <input type="text" value="" id="width_value" size=5><br>
-                <input type="button" value="↓" id="width_dn" onclick="wwidth -= 5"></td>
-            <td><input type="button" value="↑" id="speed_up" onclick="speed += 0.5"><br>
+                <input type="button" value="↓" id="width_dn" onclick="setwidth(-5)"></td>
+            <td><input type="button" value="↑" id="speed_up" onclick="setspeed(0.5)"><br>
                 <input type="text" value="" id="speed_value" size=5><br>
-                <input type="button" value="↓" id="speed_dn" onclick="speed -= 0.5"></td>
-            <td><input type="button" value="↑" id="ring_up" onclick="ring += 10"><br>
+                <input type="button" value="↓" id="speed_dn" onclick="setspeed(-0.5)"></td>
+            <td><input type="button" value="↑" id="ring_up" onclick="setring(10)"><br>
                 <input type="text" value="" id="ring_value" size=5><br>
-                <input type="button" value="↓" id="ring_dn" onclick="ring -= 10"></td>
-            <td><input type="radio" name="dir" value="1" onclick="dir = 1"> Out<br>
-                <input type="radio" name="dir" value="-1" onclick="dir = -1"> In</td>
+                <input type="button" value="↓" id="ring_dn" onclick="setring(-10)"></td>
+            <td><input type="radio" name="dir" value="1" onchange="setdir()"> Out<br>
+                <input type="radio" name="dir" value="-1" onchange="setdir()"> In</td>
             <td>
                 <div class="cp-small">
                     <div class="picker-wrapper">
@@ -185,6 +286,11 @@ function update_values()
                 </script></td>
         </tr>
     </table>
+    </div>
+    <div id="loading">
+        <center><h2>Regenerating Frames...</h2>
+        <div id="loading_progress">
+        </div></center>
     </div>
 </body>
 </html>
