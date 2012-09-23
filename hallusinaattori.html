@@ -109,10 +109,20 @@ window.onload = function() {
             var width_value = document.getElementById('width_value');
             var ring_value = document.getElementById('ring_value');
             var speed_value = document.getElementById('speed_value');
+			var shape_value = document.getElementsByName('shape')[0];
 			var shape_field1_value = document.getElementById('shape_field1_value');
-			if (shape_field1_value.value != sides) {
-				sides = parseInt(shape_field1_value.value);
+			if (shape_value.value != shape) {
+				shape = shape_value.value;
+				if (shape == 'poly') {
+					shape_field1_value.value = sides;
+				}
 				refresh();
+			}
+			if (shape == 'poly') {
+				if (shape_field1_value.value != sides) {
+					sides = parseInt(shape_field1_value.value);
+					refresh();
+				}
 			}
             if (width_value.value != wwidth) {
                 wwidth = parseInt(width_value.value);
@@ -190,12 +200,8 @@ function setspeed(delta_speed) {
 function setshape() {
 	var shape_value = document.getElementsByName('shape')[0];
 	var shape_field1 = document.getElementById('shape_field1');
+	var shape_field1_value = document.getelementById('shape_field1_value');
 	shape = shape_value.value;
-	if (shape == 'poly') {
-		shape_field1.childNodes[0].innerHTML = 'sides';
-		shape_field1.childNodes[1].value = sides;
-	}
-	refresh();
 }
 function initialize_values() {
 	// initialize form fields in customization panel
@@ -341,7 +347,7 @@ function get_spectrum(frame) {
             <td>background</td>
         </tr>
         <tr>
-			<td><select name="shape" onchange="setshape()">
+			<td><select name="shape">
 					<option selected value="spiral">Spiral</option>
 					<option value="poly">Polygon</option>
 					<option value="bar">Bar</option>
